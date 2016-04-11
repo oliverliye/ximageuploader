@@ -20,8 +20,8 @@ ximageloader 简介
 * javascript中调用方法，ximageloader不对服务器返回结果进行任何处理，需要自己处理
 ```javascript
 xloader = new XImageloader(docuement.getElementById('loader'), {
-    url: '上传url'
-    onFileUploaded： function(responseText) {} //上传成功回调函数每个图片会调用一次，responseText为服务器相应信息
+    url: '上传url'，
+    onFileUploaded： function(responseText) {}， //上传成功回调函数每个图片会调用一次，responseText为服务器相应信息
     onError： function(){} //上传失败回调函数
   });
 ```
