@@ -5,7 +5,7 @@ ximageloader 简介
 使用方法：
 ------------
 
-ximageloader是用coffeescript写的，如果自己编译需安装nodejs和coffeescript;也可以直接引用编译好的ximageloader.js。
+* ximageloader是用coffeescript写的，如果自己编译需安装nodejs和coffeescript;也可以直接引用编译好的ximageloader.js。
 ```html
 <!-- HTML5 -->
 <script src="ximageloader.js"></script>
@@ -13,9 +13,26 @@ ximageloader是用coffeescript写的，如果自己编译需安装nodejs和coffe
 <!-- For HTML4/IE -->
 <script type="text/javascript" src="ximageloader.js"></script>
 ```
-需要有一个div来生成上传组件, 必须有contenteditable属性
+* 需要有一个div来生成上传组件, 必须有contenteditable属性
 ```html
-<div upload-area style="#{imageAreaCss}" contenteditable="true"></div>
+<div contenteditable="true"></div>
 ```
+* javascript中调用方法，ximageloader不对服务器返回结果进行任何处理，需要自己处理
+```javascript
+xloader = new XImageloader(docuement.getElementById('loader'), {
+    url: '上传url'
+    onFileUploaded： function(responseText) {} //上传成功回调函数，responseText为服务器相应信息
+    onError： function(){} //上传失败回调函数
+  });
+```
+* ximageloader在处理粘贴剪贴板图片时（firfox, ie），提交给服务器的是一个base64 url
+```javascript
+"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZEAAAGRCAYAAACkIY5XAA"
+```
+服务端需要对数据进行处理
+
+* ximageloader是以post表单的形式上传图片，服务端需要获取post数据的file字段进行处理，如果数据是以base64传输的需要判断
+
+
 
 
