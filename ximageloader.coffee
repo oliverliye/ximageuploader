@@ -47,6 +47,8 @@ class XImageloader
             e.stopPropagation()
             e.preventDefault()
 
+        @el.dom.onblur = ()=> @el.empty()
+
     isAllowed: (type) ->
         (return true if t.indexOf(type) >= 0) for t in @config.types
         return false
@@ -115,7 +117,6 @@ uploadFile = (loader, file)->
 
     xhr.onload = () ->
         if xhr.status is 200 or xhr.status is 201
-            alert xhr.responseText
             loader.config.onFileUploaded xhr.responseText
         else
             loader.config.onError()

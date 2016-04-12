@@ -79,6 +79,11 @@ https://github.com/oliverliye/ximageloader
         e.stopPropagation();
         return e.preventDefault();
       };
+      this.el.dom.onblur = (function(_this) {
+        return function() {
+          return _this.el.empty();
+        };
+      })(this);
     }
 
     XImageloader.prototype.isAllowed = function(type) {
@@ -192,7 +197,6 @@ https://github.com/oliverliye/ximageloader
     xhr.open('POST', loader.config.url);
     xhr.onload = function() {
       if (xhr.status === 200 || xhr.status === 201) {
-        alert(xhr.responseText);
         return loader.config.onFileUploaded(xhr.responseText);
       } else {
         return loader.config.onError();
