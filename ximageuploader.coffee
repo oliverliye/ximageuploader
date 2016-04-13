@@ -29,7 +29,7 @@ class Element
     isImg: () -> @dom.nodeName is 'IMG' || @dom.nodeName is 'img'
 
 
-class XImageloader
+class XImageUploader
     constructor: (element, config) ->
         @el = new Element element
         return null unless @el.isDiv()
@@ -123,5 +123,5 @@ uploadFile = (loader, file)->
 
     xhr.send formData
 
-window.XImageloader = XImageloader
+window.XImageUploader = XImageUploader
 

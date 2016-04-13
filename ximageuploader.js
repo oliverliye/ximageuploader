@@ -8,7 +8,7 @@ https://github.com/oliverliye/ximageloader
  */
 
 (function() {
-  var Element, XImageloader, defaults, extend, loadImageFromClip, onDrop, onPaste, uploadFile;
+  var Element, XImageUploader, defaults, extend, loadImageFromClip, onDrop, onPaste, uploadFile;
 
   defaults = {
     maxFile: 1,
@@ -55,8 +55,8 @@ https://github.com/oliverliye/ximageloader
 
   })();
 
-  XImageloader = (function() {
-    function XImageloader(element, config) {
+  XImageUploader = (function() {
+    function XImageUploader(element, config) {
       this.el = new Element(element);
       if (!this.el.isDiv()) {
         return null;
@@ -86,7 +86,7 @@ https://github.com/oliverliye/ximageloader
       })(this);
     }
 
-    XImageloader.prototype.isAllowed = function(type) {
+    XImageUploader.prototype.isAllowed = function(type) {
       var j, len, ref, t;
       ref = this.config.types;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -98,7 +98,7 @@ https://github.com/oliverliye/ximageloader
       return false;
     };
 
-    return XImageloader;
+    return XImageUploader;
 
   })();
 
@@ -205,6 +205,6 @@ https://github.com/oliverliye/ximageloader
     return xhr.send(formData);
   };
 
-  window.XImageloader = XImageloader;
+  window.XImageUploader = XImageUploader;
 
 }).call(this);
