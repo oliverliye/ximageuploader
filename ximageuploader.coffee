@@ -1,8 +1,8 @@
 ### 
-ximageloadr is image upload interface
+ximageuploadr is image upload interface
 support drag paste
 
-https://github.com/oliverliye/ximageloader
+https://github.com/oliverliye/ximageuploader
 ###
 
 defaults = 
@@ -15,6 +15,18 @@ extend = (d, s)->
     d[k] = v for k, v of s
     d
 
+createHiddenEditable = ->
+    div = document.createElement 'div'
+    div.setAttribute 'contenteditable', true
+    div.setAttribute 'tabindex', -1
+    div.style.width = "1px"
+    div.style.height = "1px"
+    div.style.position = "fixed"
+    div.style.left = "-100px"
+    div.overflow = 'hidden'
+    div
+
+
 class Element 
     constructor: (element) -> @dom = element
 
@@ -23,6 +35,8 @@ class Element
             return @dom.getAttribute name
         else
             @dom.setAttribute name, value
+    append: (dom)-> @dom.appendChild dom
+
 
     empty: ()-> @dom.innerHTML = ""
     isDiv: () -> @dom.nodeName is 'DIV' || @dom.nodeName is 'div'
@@ -33,10 +47,11 @@ class XImageUploader
     constructor: (element, config) ->
         @el = new Element element
         return null unless @el.isDiv()
-        @el.attr 'contenteditable', 'true'
+        @paste = new Element createHiddenEditable()
         @config = extend defaults, config
 
-        @el.dom.onpaste = (e)=> onPaste @, e
+        @el.append @paste.dom
+        @el.dom.onclick = => @paste.dom.focus()
 
         @el.dom.ondrop = (e)=>
             e.stopPropagation()
@@ -48,6 +63,8 @@ class XImageUploader
             e.preventDefault()
 
         @el.dom.onblur = ()=> @el.empty()
+
+        @paste.dom.onpaste = (e)=> onPaste @, e
 
     isAllowed: (type) ->
         (return true if t.indexOf(type) >= 0) for t in @config.types
@@ -71,11 +88,11 @@ onPaste = (loader, e)->
         # firefox
         else
             setTimeout =>
-                for child in loader.el.dom.childNodes
+                for child in loader.paste.dom.childNodes
                     child = new Element child
                     continue unless child.isImg()
                     loadImageFromClip loader, child.attr('src')
-                loader.el.empty()
+                loader.paste.empty()
                 return
             , 1
     
