@@ -8,7 +8,7 @@ https://github.com/oliverliye/ximageuploader
  */
 
 (function() {
-  var Element, XImageUploader, createHiddenEditable, defaults, extend, loadImageFromClip, onDrop, onPaste, uploadFile;
+  var Element, XImageUploader, createFormUpload, createHiddenEditable, createUploadIFrame, defaults, extend, loadImageFromClip, onDrop, onPaste, uploadFile;
 
   defaults = {
     maxFile: 1,
@@ -28,15 +28,46 @@ https://github.com/oliverliye/ximageuploader
 
   createHiddenEditable = function() {
     var div;
-    div = document.createElement('div');
-    div.setAttribute('contenteditable', true);
-    div.setAttribute('tabindex', -1);
-    div.style.width = "1px";
-    div.style.height = "1px";
-    div.style.position = "fixed";
-    div.style.left = "-100px";
-    div.overflow = 'hidden';
+    div = new Element(document.createElement('div'));
+    div.attr('contenteditable', true);
+    div.attr('tabindex', -1);
+    div.css("width", "1px");
+    div.css("height", "1px");
+    div.css("position", "fixed");
+    div.css("left", "-9999px");
+    div.css("overflow", "hidden");
     return div;
+  };
+
+  createFormUpload = function(input, url, loader) {
+    var file, form;
+    form = new Element(document.createElement('form'));
+    form.attr('method', 'POST');
+    form.attr('action', url);
+    form.attr('enctype', 'multipart/form-data');
+    form.attr('target', loader.uid);
+    file = new Element(input.clone());
+    file.dom.onchange = function() {
+      var iframe;
+      iframe = createUploadIFrame(loader.uid);
+      form.append(iframe);
+      iframe.dom.onload = function() {
+        loader.config.onFileUploaded(iframe.dom.contentWindow.document.body.innerHTML);
+        iframe.dom.onload = null;
+        return form.remove(iframe);
+      };
+      return form.dom.submit();
+    };
+    form.append(file);
+    return form;
+  };
+
+  createUploadIFrame = function(target) {
+    var iframe;
+    iframe = new Element(document.createElement('iframe'));
+    iframe.attr("name", target);
+    iframe.css("display", "none");
+    return iframe;
   };
 
   Element = (function() {
@@ -52,8 +83,24 @@ https://github.com/oliverliye/ximageuploader
       }
     };
 
-    Element.prototype.append = function(dom) {
-      return this.dom.appendChild(dom);
+    Element.prototype.css = function(name, value) {
+      return this.dom.style[name] = value;
+    };
+
+    Element.prototype.append = function(node) {
+      return this.dom.appendChild(node.dom);
+    };
+
+    Element.prototype.remove = function(node) {
+      return this.dom.removeChild(node.dom);
+    };
+
+    Element.prototype.clone = function() {
+      return this.dom.cloneNode();
+    };
+
+    Element.prototype.focus = function() {
+      return this.dom.focus();
     };
 
     Element.prototype.empty = function() {
@@ -68,22 +115,28 @@ https://github.com/oliverliye/ximageuploader
       return this.dom.nodeName === 'IMG' || this.dom.nodeName === 'img';
     };
 
+    Element.prototype.isFileInput = function() {
+      return this.dom.nodeName === 'INPUT' || this.dom.nodeName === 'input' && this.dom.getAttribute('type') === 'file';
+    };
+
     return Element;
 
   })();
 
   XImageUploader = (function() {
     function XImageUploader(element, config) {
+      var child, input, j, len, ref;
+      this.uid = new Date().getTime();
       this.el = new Element(element);
       if (!this.el.isDiv()) {
         return null;
       }
-      this.paste = new Element(createHiddenEditable());
+      this.paste = createHiddenEditable();
       this.config = extend(defaults, config);
-      this.el.append(this.paste.dom);
+      this.el.append(this.paste);
       this.el.dom.onclick = (function(_this) {
         return function() {
-          return _this.paste.dom.focus();
+          return _this.paste.focus();
         };
       })(this);
       this.el.dom.ondrop = (function(_this) {
@@ -97,16 +150,22 @@ https://github.com/oliverliye/ximageuploader
         e.stopPropagation();
         return e.preventDefault();
       };
-      this.el.dom.onblur = (function(_this) {
-        return function() {
-          return _this.el.empty();
-        };
-      })(this);
       this.paste.dom.onpaste = (function(_this) {
         return function(e) {
           return onPaste(_this, e);
         };
       })(this);
+      ref = this.el.dom.childNodes;
+      for (j = 0, len = ref.length; j < len; j++) {
+        child = ref[j];
+        input = new Element(child);
+        if (input.isFileInput()) {
+          this.file = createFormUpload(input, config.url, this);
+          this.el.append(this.file);
+          this.el.remove(input);
+          break;
+        }
+      }
     }
 
     XImageUploader.prototype.isAllowed = function(type) {
@@ -174,7 +233,7 @@ https://github.com/oliverliye/ximageuploader
       }
       return setTimeout((function(_this) {
         return function() {
-          return loader.el.empty();
+          return loader.paste.empty();
         };
       })(this), 1);
     }
@@ -183,7 +242,7 @@ https://github.com/oliverliye/ximageuploader
   loadImageFromClip = function(loader, src) {
     var img;
     if (src.match(/^webkit\-fake\-url\:\/\//)) {
-      console.log("error");
+      return loader.config.onError();
     }
     img = new Image();
     img.crossOrigin = "anonymous";

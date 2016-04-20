@@ -3,6 +3,7 @@ ximageuploadr is image upload interface
 support drag paste
 
 https://github.com/oliverliye/ximageuploader
+http://www.oliverliye.com/XImageUploader
 ###
 
 defaults = 
@@ -16,15 +17,39 @@ extend = (d, s)->
     d
 
 createHiddenEditable = ->
-    div = document.createElement 'div'
-    div.setAttribute 'contenteditable', true
-    div.setAttribute 'tabindex', -1
-    div.style.width = "1px"
-    div.style.height = "1px"
-    div.style.position = "fixed"
-    div.style.left = "-100px"
-    div.overflow = 'hidden'
+    div = new Element document.createElement 'div'
+    div.attr 'contenteditable', true
+    div.attr 'tabindex', -1
+    div.css "width", "1px"
+    div.css "height", "1px"
+    div.css "position", "fixed"
+    div.css "left", "-9999px"
+    div.css "overflow", "hidden"
     div
+
+createFormUpload = (input, url, loader) ->
+    form = new Element document.createElement 'form'
+    form.attr 'method', 'POST'
+    form.attr 'action', url
+    form.attr 'enctype', 'multipart/form-data'
+    form.attr 'target', loader.uid
+    file = new Element input.clone()
+    file.dom.onchange = ->
+        iframe = createUploadIFrame loader.uid
+        form.append iframe
+        iframe.dom.onload = ->
+            loader.config.onFileUploaded iframe.dom.contentWindow.document.body.innerHTML
+            iframe.dom.onload = null
+            form.remove iframe
+        form.dom.submit()
+    form.append file
+    form
+
+createUploadIFrame = (target)->
+    iframe = new Element document.createElement 'iframe'
+    iframe.attr "name", target
+    iframe.css "display", "none"
+    iframe
 
 
 class Element 
@@ -35,23 +60,28 @@ class Element
             return @dom.getAttribute name
         else
             @dom.setAttribute name, value
-    append: (dom)-> @dom.appendChild dom
+    css: (name, value) -> @dom.style[name] = value
 
-
+    append: (node)-> @dom.appendChild node.dom
+    remove: (node)-> @dom.removeChild node.dom
+    clone: -> @dom.cloneNode()
+    focus: -> @dom.focus()
     empty: ()-> @dom.innerHTML = ""
-    isDiv: () -> @dom.nodeName is 'DIV' || @dom.nodeName is 'div'
-    isImg: () -> @dom.nodeName is 'IMG' || @dom.nodeName is 'img'
-
+    isDiv: () -> @dom.nodeName is 'DIV' or @dom.nodeName is 'div'
+    isImg: () -> @dom.nodeName is 'IMG' or @dom.nodeName is 'img'
+    isFileInput: () -> @dom.nodeName is 'INPUT' or @dom.nodeName is 'input' and @dom.getAttribute('type') is 'file'
 
 class XImageUploader
     constructor: (element, config) ->
+        @uid = new Date().getTime()
         @el = new Element element
         return null unless @el.isDiv()
-        @paste = new Element createHiddenEditable()
+
+        @paste = createHiddenEditable()
         @config = extend defaults, config
 
-        @el.append @paste.dom
-        @el.dom.onclick = => @paste.dom.focus()
+        @el.append @paste
+        @el.dom.onclick = => @paste.focus()
 
         @el.dom.ondrop = (e)=>
             e.stopPropagation()
@@ -62,9 +92,15 @@ class XImageUploader
             e.stopPropagation()
             e.preventDefault()
 
-        @el.dom.onblur = ()=> @el.empty()
-
         @paste.dom.onpaste = (e)=> onPaste @, e
+
+        for child in @el.dom.childNodes
+            input = new Element child
+            if input.isFileInput()
+                @file = createFormUpload input, config.url, @
+                @el.append @file
+                @el.remove input
+                break  
 
     isAllowed: (type) ->
         (return true if t.indexOf(type) >= 0) for t in @config.types
@@ -100,12 +136,12 @@ onPaste = (loader, e)->
     	for file in window.clipboardData.files
             loadImageFromClip loader, URL.createObjectURL(file)
         setTimeout => 
-        	loader.el.empty()
+        	loader.paste.empty()
         , 1
 
 loadImageFromClip = (loader, src)->
-    if src.match /^webkit\-fake\-url\:\/\//
-        console.log "error"
+    return loader.config.onError() if src.match /^webkit\-fake\-url\:\/\//
+
     img = new Image()
     img.crossOrigin = "anonymous"
     img.onload = =>
