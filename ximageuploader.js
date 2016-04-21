@@ -5,6 +5,7 @@ ximageuploadr is image upload interface
 support drag paste
 
 https://github.com/oliverliye/ximageuploader
+http://www.oliverliye.com/XImageUploader
  */
 
 (function() {
@@ -40,21 +41,25 @@ https://github.com/oliverliye/ximageuploader
   };
 
   createFormUpload = function(input, url, loader) {
-    var file, form;
+    var change, file, form;
     form = new Element(document.createElement('form'));
     form.attr('method', 'POST');
     form.attr('action', url);
     form.attr('enctype', 'multipart/form-data');
     form.attr('target', loader.uid);
     file = new Element(input.clone());
-    file.dom.onchange = function() {
+    file.dom.onchange = change = function() {
       var iframe;
       iframe = createUploadIFrame(loader.uid);
       form.append(iframe);
       iframe.dom.onload = function() {
         loader.config.onFileUploaded(iframe.dom.contentWindow.document.body.innerHTML);
         iframe.dom.onload = null;
-        return form.remove(iframe);
+        form.remove(iframe);
+        form.remove(file);
+        file = new Element(input.clone());
+        file.dom.onchange = change;
+        return form.append(file);
       };
       return form.dom.submit();
     };
@@ -185,8 +190,11 @@ https://github.com/oliverliye/ximageuploader
   })();
 
   onDrop = function(loader, e) {
-    var file, j, len, maxFile, ref;
+    var file, files, j, len, maxFile, ref;
     maxFile = loader.config.maxFile;
+    if (!(files = e.dataTransfer.files)) {
+      return;
+    }
     ref = e.dataTransfer.files;
     for (j = 0, len = ref.length; j < len; j++) {
       file = ref[j];

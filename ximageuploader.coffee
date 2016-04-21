@@ -34,13 +34,17 @@ createFormUpload = (input, url, loader) ->
     form.attr 'enctype', 'multipart/form-data'
     form.attr 'target', loader.uid
     file = new Element input.clone()
-    file.dom.onchange = ->
+    file.dom.onchange =  change = ->
         iframe = createUploadIFrame loader.uid
         form.append iframe
         iframe.dom.onload = ->
             loader.config.onFileUploaded iframe.dom.contentWindow.document.body.innerHTML
             iframe.dom.onload = null
             form.remove iframe
+            form.remove file
+            file = new Element input.clone()
+            file.dom.onchange = change
+            form.append file
         form.dom.submit()
     form.append file
     form
@@ -108,6 +112,7 @@ class XImageUploader
 
 onDrop = (loader, e)->
     maxFile = loader.config.maxFile
+    return unless files = e.dataTransfer.files
     uploadFile loader, file for file in e.dataTransfer.files
     return
 
