@@ -88,13 +88,21 @@ class XImageUploader
         @el.dom.onclick = => @paste.focus()
 
         @el.dom.ondrop = (e)=>
-            e.stopPropagation()
-            e.preventDefault()
-            onDrop @, e
+            if event = e
+                event.stopPropagation()
+                event.preventDefault()
+            else if event = window.event
+                event.returnValue = false
+                event.cancelBubble = true
+            onDrop @, event 
 
         @el.dom.ondragenter = @el.dom.ondragover = (e)->
-            e.stopPropagation()
-            e.preventDefault()
+            if event = e
+                event.stopPropagation()
+                event.preventDefault()
+            else if event = window.event
+                event.returnValue = false
+                event.cancelBubble = true
 
         @paste.dom.onpaste = (e)=> onPaste @, e
 
