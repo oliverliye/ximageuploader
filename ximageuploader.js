@@ -273,8 +273,7 @@ loadImageFromClip = function(loader, src) {
       ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       dataURL = canvas.toDataURL('image/png');
-      uploadFile(loader, dataURL);
-      return console.log(dataURL);
+      return uploadFile(loader, dataURL);
     };
   })(this);
   img.onerror = (function(_this) {

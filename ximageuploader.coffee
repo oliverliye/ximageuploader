@@ -165,7 +165,6 @@ loadImageFromClip = (loader, src)->
         ctx.drawImage img, 0, 0, canvas.width, canvas.height
         dataURL = canvas.toDataURL 'image/png'
         uploadFile loader, dataURL
-        console.log dataURL
 
     img.onerror = => loader.config.onError()
     img.src = src
